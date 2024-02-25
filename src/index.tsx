@@ -20,18 +20,22 @@ export interface Result {
 }
 
 export class debouncedMethod<T>{
-  constructor(method:T, debounceTime:number){
+  private _method: T;
+  private _timeout: number | undefined; // Allow _timeout to be undefined
+  private _debounceTime: number;
+
+  constructor(method: T, debounceTime: number) {
     this._method = method;
     this._debounceTime = debounceTime;
   }
-  private _method:T;
-  private _timeout:number;
-  private _debounceTime:number;
-  public invoke:T = ((...args:any[])=>{
-    this._timeout && window.clearTimeout(this._timeout);
-    this._timeout = window.setTimeout(()=>{
+
+  public invoke: T = ((...args: any[]) => {
+    if (this._timeout !== undefined) {
+      window.clearTimeout(this._timeout);
+    }
+    this._timeout = window.setTimeout(() => {
       (this._method as any)(...args);
-    },this._debounceTime);
+    }, this._debounceTime);
   }) as any;
 }
 
@@ -50,7 +54,7 @@ const renderResults = (results: any, callback: Function | undefined, setShowResu
   </div>
 
 
-export const ReactOsmGeocoding = ({ placeholder = "Enter address", debounce = 1000, iconUrl = "https://cdn2.iconfinder.com/data/icons/ios-7-icons/50/search-512.png", callback, city = "Konya", countrycodes = "tr", acceptLanguage = "tr", viewbox = "" }: Props) => {
+export const ReactOsmGeocoding = ({ placeholder = "Enter address", debounce = 1000, iconUrl = "https://cdn2.iconfinder.com/data/icons/ios-7-icons/50/search-512.png", callback, countrycodes = "tr", acceptLanguage = "tr", viewbox = "" }: Props) => {
   const [results, setResults] = useState<Partial<Result[]>>([]);
   const [showResults, setShowResults] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
@@ -74,7 +78,7 @@ export const ReactOsmGeocoding = ({ placeholder = "Enter address", debounce = 10
 
     setShowLoader(true);
 
-    let url = `https://nominatim.openstreetmap.org/search?format=json&q=${address}&city=${city}&countrycodes=${countrycodes}&accept-language=${acceptLanguage}`;
+    let url = `https://nominatim.openstreetmap.org/search?format=json&q=${address}&countrycodes=${countrycodes}&accept-language=${acceptLanguage}`;
 
     if(viewbox.length)
       url = `${url}&viewbox=${viewbox}&bounded=1`;
