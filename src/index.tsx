@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react'
 import styles from './styles.module.css'
+import SearchButton from './buttons/SearchButton';
 
 interface Props {
   placeholder?: string,
   debounce?: number,
-  iconUrl?: string,
   callback?: Function,
   city?: string,
   countrycodes?: string,
@@ -39,71 +39,71 @@ export class debouncedMethod<T>{
   }) as any;
 }
 
-const renderResults = (results: any, callback: Function | undefined, setShowResults:React.Dispatch<React.SetStateAction<boolean>>) => 
+const renderResults = (results: any, callback: Function | undefined, setShowResults: React.Dispatch<React.SetStateAction<boolean>>) =>
   <div className={styles.results}>
-    {results.map((result: Result, index: number) => 
-      <div key={index} className={styles.result} onClick={()=> {
-        if(callback) {
+    {results.map((result: Result, index: number) =>
+      <div key={index} className={styles.result} onClick={() => {
+        if (callback) {
           callback(result);
           setShowResults(false);
         }
-        }}>
+      }}>
         {result?.display_name}
       </div>
     )}
   </div>
 
 
-export const ReactOsmGeocoding = ({ placeholder = "Enter address", debounce = 1000, iconUrl = "https://cdn2.iconfinder.com/data/icons/ios-7-icons/50/search-512.png", callback, countrycodes = "tr", acceptLanguage = "tr", viewbox = "" }: Props) => {
+export const ReactOsmGeocoding = ({ placeholder = "Enter address", debounce = 1000, callback, countrycodes = "tr", acceptLanguage = "tr", viewbox = "" }: Props) => {
   const [results, setResults] = useState<Partial<Result[]>>([]);
   const [showResults, setShowResults] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const mainContainerRef = useRef<HTMLDivElement>(null);
-  
-  document.addEventListener('click', function(event) {
-      var isClickInside = mainContainerRef?.current?.contains(event.target as Node);
-      if (!isClickInside) {
-        setShowResults(false);
-      }
+
+  document.addEventListener('click', function (event) {
+    var isClickInside = mainContainerRef?.current?.contains(event.target as Node);
+    if (!isClickInside) {
+      setShowResults(false);
+    }
   });
 
-  document.onkeyup = function(event) {
-    if (event.key === "Escape"){
+  document.onkeyup = function (event) {
+    if (event.key === "Escape") {
       setShowResults(false);
-      }
+    }
   }
 
   function getGeocoding(address = "") {
-    if(address.length === 0) return;
+    if (address.length === 0) return;
 
     setShowLoader(true);
 
     let url = `https://nominatim.openstreetmap.org/search?format=json&q=${address}&countrycodes=${countrycodes}&accept-language=${acceptLanguage}`;
 
-    if(viewbox.length)
+    if (viewbox.length)
       url = `${url}&viewbox=${viewbox}&bounded=1`;
 
     fetch(url)
-    .then(response => response.json())
-    .then((data) => {
-      setResults(data);
-      setShowResults(true);
-    })
-    .catch(err =>console.warn(err))
-    .finally(() => setShowLoader(false));
+      .then(response => response.json())
+      .then((data) => {
+        setResults(data);
+        setShowResults(true);
+      })
+      .catch(err => console.warn(err))
+      .finally(() => setShowLoader(false));
   }
 
-  var debouncer = new debouncedMethod((address: string)=>{
+  var debouncer = new debouncedMethod((address: string) => {
     getGeocoding(address);
-   }, debounce);
+  }, debounce);
 
 
 
   return <div className={styles.reactOsmGeocoding} ref={mainContainerRef}>
-    <input type="text" name="geocoding" id="geocoding" placeholder={placeholder} 
+    <input type="text" name="geocoding" id="geocoding" placeholder={placeholder}
       onClick={() => setShowResults(true)}
-      onChange={event => debouncer.invoke(event.target.value)}/>
-    <img src={iconUrl} width={"30px"} height={"30px"}/>
+      onChange={event => debouncer.invoke(event.target.value)} />
+    <SearchButton />
     {showLoader && <div className={styles.loader}></div>}
     {(results.length && showResults) ? renderResults(results, callback, setShowResults) : ""}
   </div>
